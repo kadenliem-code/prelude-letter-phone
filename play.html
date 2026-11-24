@@ -13,7 +13,7 @@ main{max-width:460px;margin:0 auto;padding:8px 10px 32px}
 .pick{min-height:76px;border-radius:18px;background:var(--card);color:var(--ink);font-size:18px;font-weight:800}
 .meta{display:flex;justify-content:space-between;gap:8px;font-weight:800}
 .note{min-height:20px;margin:4px 0 8px;font-weight:650}
-.page{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px}
+.page{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .cell{background:var(--card);color:var(--ink);border-radius:12px;padding:6px 2px 8px;min-height:120px}
 .cell.stop{outline:3px solid var(--accent)}
 .cell .n{text-align:center;font-size:11px;font-weight:800;color:var(--pencil);margin:0}
@@ -78,10 +78,11 @@ function banner(hit){if(!hit)return"";if(hit.ash)return"Stop. The next strikes a
 function stack(keys, cls){
   const ordered=byPitch(keys);
   if(!ordered.length) return '<p class="dash">—</p>';
-  return ordered.map(k=>k.h?'<p class="letter hold">'+k.n+'<span class="oct">'+k.o+'</span></p>':'<p class="letter">'+k.n+'<span class="oct">'+k.o+'</span></p>').join("");
+  const size=cls||"mid";
+  return '<div class="'+size+'">'+ordered.map(k=>k.h?'<p class="letter hold">'+k.n+'<span class="oct">'+k.o+'</span></p>':'<p class="letter">'+k.n+'<span class="oct">'+k.o+'</span></p>').join("")+'</div>';
 }
 function cell(hit){
-  return '<div class="cell sm'+(hit.ash?" stop":"")+'"><p class="n">'+hit.n+(hit.ash?" stop":hit.n===53?" mark":"")+'</p><div>'+stack(hit.r)+'</div><p class="n">L</p><div>'+stack(hit.l)+'</div></div>';
+  return '<div class="cell mid'+(hit.ash?" stop":"")+'"><p class="n">'+hit.n+(hit.ash?" stop":hit.n===53?" mark":"")+'</p><div>'+stack(hit.r)+'</div><p class="n">L</p><div>'+stack(hit.l)+'</div></div>';
 }
 function hands(hit, theme){
   return '<div class="hands '+theme+'"><div class="col"><p class="role">RIGHT HAND</p>'+stack(hit.r,"big")+'</div><div class="col"><p class="role">LEFT HAND</p>'+stack(hit.l,"big")+'</div></div>';
@@ -89,22 +90,16 @@ function hands(hit, theme){
 function controls(){
   return '<div class="controls"><button type="button" data-act="back">Back</button><button class="go" type="button" data-act="next">Next</button></div><div class="three"><button type="button" data-act="play">'+(playing?"Pause":"Play")+'</button><button type="button" data-act="stop">Stop 8</button><button type="button" data-act="mark">Mark 53</button></div>';
 }
-function synth(hit){
-  const lanes=["R","L"];
-  let html='<div class="stage"><div class="nowline"></div>';
-  [0,1,2,3].forEach(step=>{
-    const h=HITS[index+step]; if(!h) return;
-    const y = step===0? 300 : 220-step*62;
-    ["r","l"].forEach((hand,hi)=>{
-      const keys=byPitch(h[hand]);
-      keys.forEach((k,i)=>{
-        const x= 24 + hi*210 + (i%4)*52;
-        if(k.h && step===0){ html+='<div class="tail" style="left:'+(x+18)+'px;top:'+(y+36)+'px;height:70px"></div>'; }
-        html+='<div class="block'+(k.h?" held":"")+'" style="left:'+x+'px;top:'+y+'px">'+(k.h?"hold ":"")+k.n+'<span class="oct">'+k.o+'</span></div>';
-      });
-    });
-  });
-  return html+'</div>';
+function synth(){
+  let html='<div class="stage" style="height:auto;padding:8px 4px 10px">';
+  for(let step=3; step>=0; step--){
+    const h=HITS[index+step];
+    if(!h) continue;
+    const now=step===0;
+    html+='<p class="note" style="margin:6px 2px 2px;color:'+(now?"#e4c56a":"#c4b3d4")+'">'+(now?"Now":"Next +"+step)+" · "+h.n+(h.ash?" · stop":"")+'</p>';
+    html+='<div class="hands '+(now?"gold":"dark")+'" style="margin-bottom:4px"><div class="col"><p class="role">RIGHT HAND</p>'+stack(h.r, now?"big":"mid")+'</div><div class="col"><p class="role">LEFT HAND</p>'+stack(h.l, now?"big":"mid")+'</div></div>';
+  }
+  return html+'<div class="nowline" style="position:static;height:3px;margin-top:6px"></div></div>';
 }
 function render(){
   clearInterval(timer); timer=0;
@@ -116,16 +111,16 @@ function render(){
   if(view==="home"){
     body='<div class="grid">'+VIEWS.filter(v=>v[0]!=="home").map(v=>'<button class="pick" type="button" data-view="'+v[0]+'">'+v[1]+'</button>').join("")+'</div>';
   } else if(view==="book"||view==="film"){
-    const start = view==="film"? 7+filmPage*4 : Math.floor(index/8)*8;
-    const count = view==="film"?4:8;
+    const start = view==="film"? 7+filmPage*4 : (index<7?0:7+Math.floor((index-7)/8)*8);
+    const count = view==="film"?4:(index<7?7:8);
     const slice=HITS.slice(start, start+count);
     body='<p class="meta"><span>'+(view==="film"?"Page "+(filmPage+1)+" · play turns it":"Page of 8")+'</span><span>'+place(start)+'</span></p><p class="note">'+banner(HITS[start]||hit)+'</p><div class="page">'+slice.map(cell).join("")+'</div>'+controls();
   } else if(view==="sheets"||view==="genome"){
     body=HITS.map(h=>'<button type="button" class="card'+(h.n-1===index?" on":"")+'" data-go="'+(h.n-1)+'"><b>'+h.n+' · '+place(h.n-1)+(h.ash?" · stop":h.n===53?" · mark":"")+'</b><div>R '+spell(fresh(h.r))+'</div><div>L '+spell(fresh(h.l))+'</div></button>').join("")+controls();
   } else if(view==="best"){
-    body='<p class="note">Dark cards 8–13. Same notes as the gold block.</p>'+HITS.slice(7,13).map(h=>'<div class="hands dark" style="margin-bottom:8px"><div class="col"><p class="role">'+h.n+' RIGHT</p>'+stack(h.r)+'</div><div class="col"><p class="role">LEFT</p>'+stack(h.l)+'</div></div>').join("");
+    body='<p class="note">8 through 15. First card is the stop. Gray is still down.</p>'+HITS.slice(7,15).map((h,i)=>'<div class="hands dark" style="margin-bottom:8px"><div class="col"><p class="role">'+h.n+' RIGHT</p>'+stack(h.r,i===0?"big":"mid")+'</div><div class="col"><p class="role">LEFT</p>'+stack(h.l,i===0?"big":"mid")+'</div></div>').join("");
   } else if(view==="synth"){
-    body='<p class="meta"><span>Strike '+hit.n+'</span><span>'+place(index)+'</span></p><p class="note">'+banner(hit)+' Holds are tails. They do not sound again.</p>'+synth(hit)+controls();
+    body='<p class="meta"><span>Strike '+hit.n+'</span><span>'+place(index)+'</span></p><p class="note">'+banner(hit)+' Gray is still down. Play walks the next three in.</p>'+synth()+controls();
   } else if(view==="huge"){
     const b=HITS[Math.min(97,index+1)];
     body='<p class="meta"><span>'+hit.n+' and '+b.n+'</span><span>'+place(index)+'</span></p>'+hands(hit,"")+hands(b,"")+controls();
