@@ -90,22 +90,16 @@ function hands(hit, theme){
 function controls(){
   return '<div class="controls"><button type="button" data-act="back">Back</button><button class="go" type="button" data-act="next">Next</button></div><div class="three"><button type="button" data-act="play">'+(playing?"Pause":"Play")+'</button><button type="button" data-act="stop">Stop 8</button><button type="button" data-act="mark">Mark 53</button></div>';
 }
-function synth(hit){
-  const lanes=["R","L"];
-  let html='<div class="stage"><div class="nowline"></div>';
-  [0,1,2,3].forEach(step=>{
-    const h=HITS[index+step]; if(!h) return;
-    const y = step===0? 300 : 220-step*62;
-    ["r","l"].forEach((hand,hi)=>{
-      const keys=byPitch(h[hand]);
-      keys.forEach((k,i)=>{
-        const x= 24 + hi*210 + (i%4)*52;
-        if(k.h && step===0){ html+='<div class="tail" style="left:'+(x+18)+'px;top:'+(y+36)+'px;height:70px"></div>'; }
-        html+='<div class="block'+(k.h?" held":"")+'" style="left:'+x+'px;top:'+y+'px">'+(k.h?"hold ":"")+k.n+'<span class="oct">'+k.o+'</span></div>';
-      });
-    });
-  });
-  return html+'</div>';
+function synth(){
+  let html='<div class="stage" style="height:auto;padding:8px 4px 10px">';
+  for(let step=3; step>=0; step--){
+    const h=HITS[index+step];
+    if(!h) continue;
+    const now=step===0;
+    html+='<p class="note" style="margin:6px 2px 2px;color:'+(now?"#e4c56a":"#c4b3d4")+'">'+(now?"Now":"Next +"+step)+" · "+h.n+(h.ash?" · stop":"")+'</p>';
+    html+='<div class="hands '+(now?"gold":"dark")+'" style="margin-bottom:4px"><div class="col"><p class="role">RIGHT HAND</p>'+stack(h.r, now?"big":"mid")+'</div><div class="col"><p class="role">LEFT HAND</p>'+stack(h.l, now?"big":"mid")+'</div></div>';
+  }
+  return html+'<div class="nowline" style="position:static;height:3px;margin-top:6px"></div></div>';
 }
 function render(){
   clearInterval(timer); timer=0;
@@ -124,9 +118,9 @@ function render(){
   } else if(view==="sheets"||view==="genome"){
     body=HITS.map(h=>'<button type="button" class="card'+(h.n-1===index?" on":"")+'" data-go="'+(h.n-1)+'"><b>'+h.n+' · '+place(h.n-1)+(h.ash?" · stop":h.n===53?" · mark":"")+'</b><div>R '+spell(fresh(h.r))+'</div><div>L '+spell(fresh(h.l))+'</div></button>').join("")+controls();
   } else if(view==="best"){
-    body='<p class="note">Dark cards 8–13. Same notes as the gold block.</p>'+HITS.slice(7,13).map(h=>'<div class="hands dark" style="margin-bottom:8px"><div class="col"><p class="role">'+h.n+' RIGHT</p>'+stack(h.r,"mid")+'</div><div class="col"><p class="role">LEFT</p>'+stack(h.l,"mid")+'</div></div>').join("");
+    body='<p class="note">8 through 15. First card is the stop. Gray is still down.</p>'+HITS.slice(7,15).map((h,i)=>'<div class="hands dark" style="margin-bottom:8px"><div class="col"><p class="role">'+h.n+' RIGHT</p>'+stack(h.r,i===0?"big":"mid")+'</div><div class="col"><p class="role">LEFT</p>'+stack(h.l,i===0?"big":"mid")+'</div></div>').join("");
   } else if(view==="synth"){
-    body='<p class="meta"><span>Strike '+hit.n+'</span><span>'+place(index)+'</span></p><p class="note">'+banner(hit)+' Holds are tails. They do not sound again.</p>'+synth(hit)+controls();
+    body='<p class="meta"><span>Strike '+hit.n+'</span><span>'+place(index)+'</span></p><p class="note">'+banner(hit)+' Gray is still down. Play walks the next three in.</p>'+synth()+controls();
   } else if(view==="huge"){
     const b=HITS[Math.min(97,index+1)];
     body='<p class="meta"><span>'+hit.n+' and '+b.n+'</span><span>'+place(index)+'</span></p>'+hands(hit,"")+hands(b,"")+controls();
