@@ -114,7 +114,7 @@ function render(){
     const start = view==="film"? 7+filmPage*4 : (index<7?0:7+Math.floor((index-7)/8)*8);
     const count = view==="film"?4:(index<7?7:8);
     const slice=HITS.slice(start, start+count);
-    body='<p class="meta"><span>'+(view==="film"?"Page "+(filmPage+1)+" · play turns it":"Page of 8")+'</span><span>'+place(start)+'</span></p><p class="note">'+banner(HITS[start]||hit)+'</p><div class="page">'+slice.map(cell).join("")+'</div>'+controls();
+    body='<p class="meta"><span>'+(view==="film"?"Page "+(filmPage+1)+" · play turns it":"Page of 8")+'</span><span>'+place(start)+'</span></p><p class="note">'+banner(HITS[start]||hit)+' Left stack is the right hand.</p>'+slice.map(h=>'<div class="hands" style="margin-bottom:8px"><div class="col"><p class="role">'+h.n+' RIGHT</p>'+stack(h.r, view==="film"||h.ash?"big":"mid")+'</div><div class="col"><p class="role">LEFT</p>'+stack(h.l, view==="film"||h.ash?"big":"mid")+'</div></div>').join("")+controls();
   } else if(view==="sheets"||view==="genome"){
     body=HITS.map(h=>'<button type="button" class="card'+(h.n-1===index?" on":"")+'" data-go="'+(h.n-1)+'"><b>'+h.n+' · '+place(h.n-1)+(h.ash?" · stop":h.n===53?" · mark":"")+'</b><div>R '+spell(fresh(h.r))+'</div><div>L '+spell(fresh(h.l))+'</div></button>').join("")+controls();
   } else if(view==="best"){
