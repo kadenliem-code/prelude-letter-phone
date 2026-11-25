@@ -17,7 +17,7 @@
   .modes button.on { background: #f4efe6; color: #1c1408; }
   #stage { flex: 1; min-height: 0; overflow: auto; padding-bottom: 8px; }
   .card { background: #f4efe6; color: #1c1408; border-radius: 16px; overflow: hidden; }
-  .cue { margin: 0; text-align: center; color: #8a8178; font-size: 10px; letter-spacing: .08em; }
+  .word { margin: 0; text-align: center; font-weight: 800; }
   .gold { outline: 3px solid #c4a15a; animation: tap .4s ease; }
   @keyframes tap { from { outline-color: #fff8e8; } to { outline-color: #c4a15a; } }
   .nowbar, .mark { background: #c4a15a; color: #1c1404; text-align: center; font-weight: 800; padding: 3px 8px; }
@@ -27,7 +27,8 @@
   .at { margin: 0; text-align: center; font-family: Fraunces, Georgia, serif; font-weight: 680; line-height: .9; }
   .hold { margin: 1px auto; text-align: center; color: #6a625a; font-weight: 700; border: 1px dotted #8a8178; border-radius: 8px; width: fit-content; padding: 0 6px; }
   .fill .at { font-size: clamp(2rem, 7.2dvh, 4.2rem); }
-  .fill .hold { font-size: clamp(.95rem, 2.6dvh, 1.35rem); }
+  .card.gold .fill .at, .card.gold .fill .hold { font-size: var(--fit); }
+  .card.gold .fill .lab, .card.gold .fill .cue, .card.gold .word { font-size: calc(var(--fit) * .42); }
   .phrase .at { font-size: 1.35rem; }
   .phrase .hold { font-size: .85rem; }
   .page .at { font-size: 1.05rem; }
@@ -35,11 +36,11 @@
   .line { height: 4px; border-radius: 99px; background: #c4a15a; margin: 8px 0; }
   .peek { display: flex; gap: 6px; }
   .fit { height: 100%; min-height: 0; display: flex; flex-direction: column; }
-  .fit > .card.gold { flex: 1 1 auto; min-height: 0; overflow: auto; }
+  .fit > .card.gold { flex: 1 1 auto; min-height: 0; overflow: hidden; }
   .fit > .line { flex: 0 0 auto; }
-  .fit > .peek { flex: 0 0 auto; max-height: 24dvh; }
-  .peek .at, .peek .hold { font-size: .62rem; line-height: .85; margin: 0; }
-  .peek .card { max-height: 24dvh; overflow: hidden; }
+  .fit > .peek, .peek { flex: 0 0 118px; height: 118px; }
+  .peek .at, .peek .hold, .peek .word { font-size: .58rem; line-height: .8; margin: 0; }
+  .peek .card { height: 118px; max-height: 118px; overflow: hidden; flex: 1; min-width: 0; }
   .bookpage { height: 100%; min-height: 0; display: flex; flex-direction: column; gap: 4px; }
   .bookpage .row { flex: 1 1 0; min-height: 0; margin: 0; overflow: hidden; }
   .strip { height: 100%; align-items: stretch; }
@@ -59,6 +60,7 @@
 </style>
 <h1 id="title">After the cascade</h1>
 <p class="meta" id="meta"></p>
+<div class="modes" id="songs"></div>
 <div class="modes" id="modes"></div>
 <div class="modes" id="jumps"></div>
 <div id="stage"></div>
@@ -71,9 +73,16 @@
 <script>
 const H = [{"n":1,"r":[{"t":"A3","h":false},{"t":"A4","h":false}],"l":[{"t":"A1","h":false},{"t":"A2","h":false}]},{"n":2,"r":[{"t":"A3","h":true},{"t":"F♯4","h":false},{"t":"A4","h":true},{"t":"C♯5","h":false},{"t":"F♯5","h":false}],"l":[{"t":"A1","h":true},{"t":"A2","h":true},{"t":"C♯3","h":false},{"t":"F♯3","h":false},{"t":"C♯4","h":false}]},{"n":3,"r":[{"t":"G♯3","h":false},{"t":"G♯4","h":false}],"l":[{"t":"G♯1","h":false},{"t":"G♯2","h":false}]},{"n":4,"r":[{"t":"G♯3","h":true},{"t":"G♯4","h":false},{"t":"C5","h":false},{"t":"G♯5","h":false}],"l":[{"t":"G♯1","h":true},{"t":"G♯2","h":true},{"t":"F♯3","h":false},{"t":"C4","h":false},{"t":"D♯4","h":false},{"t":"F♯4","h":false}]},{"n":5,"r":[{"t":"C♯3","h":false},{"t":"E3","h":false},{"t":"G♯3","h":false},{"t":"C♯4","h":false}],"l":[{"t":"C♯1","h":false},{"t":"E1","h":false},{"t":"G♯1","h":false},{"t":"C♯2","h":false}]},{"n":6,"r":[{"t":"C♯3","h":true},{"t":"C♯5","h":false},{"t":"E5","h":false},{"t":"G♯5","h":false},{"t":"C♯6","h":false}],"l":[{"t":"C♯1","h":true},{"t":"E1","h":true},{"t":"G♯1","h":true},{"t":"C♯2","h":true},{"t":"E3","h":false},{"t":"G♯3","h":false},{"t":"C♯4","h":false},{"t":"E4","h":false}]},{"n":7,"r":[{"t":"C♯3","h":true},{"t":"E5","h":false},{"t":"G♯5","h":false},{"t":"B5","h":false},{"t":"E6","h":false}],"l":[{"t":"C♯1","h":true},{"t":"E1","h":true},{"t":"G♯1","h":true},{"t":"C♯2","h":true},{"t":"G♯3","h":false},{"t":"B3","h":false},{"t":"E4","h":false},{"t":"G♯4","h":false}]},{"n":8,"r":[{"t":"C♯3","h":true},{"t":"D♯5","h":false},{"t":"G5","h":false},{"t":"A♯5","h":false},{"t":"D♯6","h":false}],"l":[{"t":"C♯1","h":true},{"t":"E1","h":true},{"t":"G♯1","h":true},{"t":"C♯2","h":true},{"t":"G3","h":false},{"t":"A♯3","h":false},{"t":"D♯4","h":false},{"t":"G4","h":false}]},{"n":9,"r":[{"t":"A3","h":false},{"t":"A4","h":false}],"l":[{"t":"A1","h":false},{"t":"A2","h":false}]},{"n":10,"r":[{"t":"A3","h":true},{"t":"A4","h":true},{"t":"D5","h":false},{"t":"F♯5","h":false},{"t":"C6","h":false},{"t":"D6","h":false}],"l":[{"t":"A1","h":true},{"t":"A2","h":true},{"t":"F♯3","h":false},{"t":"C4","h":false},{"t":"D4","h":false},{"t":"F♯4","h":false}]},{"n":11,"r":[{"t":"G♯3","h":false},{"t":"G♯4","h":false}],"l":[{"t":"G♯1","h":false},{"t":"G♯2","h":false}]},{"n":12,"r":[{"t":"G♯3","h":true},{"t":"G♯4","h":true},{"t":"C5","h":false},{"t":"D♯5","h":false},{"t":"F♯5","h":false},{"t":"C6","h":false}],"l":[{"t":"G♯1","h":true},{"t":"G♯2","h":true},{"t":"D♯3","h":false},{"t":"F♯3","h":false},{"t":"C4","h":false},{"t":"D♯4","h":false}]},{"n":13,"r":[{"t":"C♯3","h":false},{"t":"E3","h":false},{"t":"G♯3","h":false},{"t":"C♯4","h":false}],"l":[{"t":"C♯1","h":false},{"t":"E1","h":false},{"t":"G♯1","h":false},{"t":"C♯2","h":false}]},{"n":14,"r":[{"t":"C♯3","h":true},{"t":"C♯5","h":false},{"t":"E5","h":false},{"t":"G♯5","h":false},{"t":"C♯6","h":false}],"l":[{"t":"C♯1","h":true},{"t":"E1","h":true},{"t":"G♯1","h":true},{"t":"C♯2","h":true},{"t":"E3","h":false},{"t":"G♯3","h":false},{"t":"C♯4","h":false},{"t":"E4","h":false}]},{"n":15,"r":[{"t":"C♯3","h":true},{"t":"E5","h":false},{"t":"G♯5","h":false},{"t":"B5","h":false},{"t":"E6","h":false}],"l":[{"t":"C♯1","h":true},{"t":"E1","h":true},{"t":"G♯1","h":true},{"t":"C♯2","h":true},{"t":"G♯3","h":false},{"t":"B3","h":false},{"t":"E4","h":false},{"t":"G♯4","h":false}]},{"n":16,"r":[{"t":"C♯3","h":true},{"t":"D♯5","h":false},{"t":"G5","h":false},{"t":"A♯5","h":false},{"t":"D♯6","h":false}],"l":[{"t":"C♯1","h":true},{"t":"E1","h":true},{"t":"G♯1","h":true},{"t":"C♯2","h":true},{"t":"G3","h":false},{"t":"A♯3","h":false},{"t":"D♯4","h":false},{"t":"G4","h":false}]},{"n":17,"r":[{"t":"A3","h":false},{"t":"A4","h":false}],"l":[{"t":"A1","h":false},{"t":"A2","h":false}]},{"n":18,"r":[{"t":"A3","h":true},{"t":"A4","h":true},{"t":"D5","h":false},{"t":"F♯5","h":false},{"t":"C6","h":false},{"t":"D6","h":false}],"l":[{"t":"A1","h":true},{"t":"A2","h":true},{"t":"F♯3","h":false},{"t":"C4","h":false},{"t":"D4","h":false},{"t":"F♯4","h":false}]},{"n":19,"r":[{"t":"G♯3","h":false},{"t":"G♯4","h":false}],"l":[{"t":"G♯1","h":false},{"t":"G♯2","h":false}]},{"n":20,"r":[{"t":"G♯3","h":true},{"t":"G♯4","h":true},{"t":"C5","h":false},{"t":"D♯5","h":false},{"t":"F♯5","h":false},{"t":"C6","h":false}],"l":[{"t":"G♯1","h":true},{"t":"G♯2","h":true},{"t":"D♯3","h":false},{"t":"F♯3","h":false},{"t":"C4","h":false},{"t":"D♯4","h":false}]},{"n":21,"r":[{"t":"C♯3","h":false},{"t":"E3","h":false},{"t":"G♯3","h":false},{"t":"C♯4","h":false}],"l":[{"t":"C♯1","h":false},{"t":"E1","h":false},{"t":"G♯1","h":false},{"t":"C♯2","h":false}]},{"n":22,"r":[{"t":"C♯3","h":true},{"t":"C♯5","h":false},{"t":"E5","h":false},{"t":"G♯5","h":false},{"t":"C♯6","h":false}],"l":[{"t":"C♯1","h":true},{"t":"E1","h":true},{"t":"G♯1","h":true},{"t":"C♯2","h":true},{"t":"E3","h":false},{"t":"G♯3","h":false},{"t":"C♯4","h":false},{"t":"E4","h":false}]},{"n":23,"r":[{"t":"C♯3","h":true},{"t":"G♯5","h":false},{"t":"C♯6","h":false},{"t":"G♯6","h":false}],"l":[{"t":"C♯1","h":true},{"t":"E1","h":true},{"t":"G♯1","h":true},{"t":"C♯2","h":true},{"t":"B3","h":false},{"t":"C♯4","h":false},{"t":"G♯4","h":false},{"t":"B4","h":false}]},{"n":24,"r":[{"t":"C♯3","h":true},{"t":"F♯5","h":false},{"t":"C♯6","h":false},{"t":"F♯6","h":false}],"l":[{"t":"C♯1","h":true},{"t":"E1","h":true},{"t":"G♯1","h":true},{"t":"C♯2","h":true},{"t":"A3","h":false},{"t":"C♯4","h":false},{"t":"F♯4","h":false},{"t":"A4","h":false}]},{"n":25,"r":[{"t":"C4","h":false},{"t":"C5","h":false}],"l":[{"t":"C2","h":false},{"t":"C3","h":false}]},{"n":26,"r":[{"t":"C4","h":true},{"t":"C5","h":true},{"t":"E5","h":false},{"t":"F♯5","h":false},{"t":"A5","h":false},{"t":"E6","h":false}],"l":[{"t":"C2","h":true},{"t":"C3","h":true},{"t":"F♯3","h":false},{"t":"A3","h":false},{"t":"E4","h":false},{"t":"F♯4","h":false}]},{"n":27,"r":[{"t":"B3","h":false},{"t":"B4","h":false}],"l":[{"t":"B1","h":false},{"t":"B2","h":false}]},{"n":28,"r":[{"t":"B3","h":true},{"t":"B4","h":true},{"t":"D♯5","h":false},{"t":"F♯5","h":false},{"t":"A5","h":false},{"t":"D♯6","h":false}],"l":[{"t":"B1","h":true},{"t":"B2","h":true},{"t":"F♯3","h":false},{"t":"A3","h":false},{"t":"D♯4","h":false},{"t":"F♯4","h":false}]},{"n":29,"r":[{"t":"E3","h":false},{"t":"G♯3","h":false},{"t":"B3","h":false},{"t":"E4","h":false}],"l":[{"t":"E1","h":false},{"t":"G♯1","h":false},{"t":"B1","h":false},{"t":"E2","h":false}]},{"n":30,"r":[{"t":"E3","h":true},{"t":"E5","h":false},{"t":"G♯5","h":false},{"t":"B5","h":false},{"t":"E6","h":false}],"l":[{"t":"E1","h":true},{"t":"G♯1","h":true},{"t":"B1","h":true},{"t":"E2","h":true},{"t":"G♯3","h":false},{"t":"B3","h":false},{"t":"E4","h":false},{"t":"G♯4","h":false}]},{"n":31,"r":[{"t":"E3","h":true},{"t":"B5","h":false},{"t":"E6","h":false},{"t":"B6","h":false}],"l":[{"t":"E1","h":true},{"t":"G♯1","h":true},{"t":"B1","h":true},{"t":"E2","h":true},{"t":"D♯4","h":false},{"t":"E4","h":false},{"t":"B4","h":false},{"t":"D♯5","h":false}]},{"n":32,"r":[{"t":"E3","h":true},{"t":"A5","h":false},{"t":"E6","h":false},{"t":"A6","h":false}],"l":[{"t":"E1","h":true},{"t":"G♯1","h":true},{"t":"B1","h":true},{"t":"E2","h":true},{"t":"C♯4","h":false},{"t":"E4","h":false},{"t":"A4","h":false},{"t":"C♯5","h":false}]},{"n":33,"r":[{"t":"E4","h":false},{"t":"E5","h":false}],"l":[{"t":"E2","h":false},{"t":"E3","h":false}]},{"n":34,"r":[{"t":"E4","h":true},{"t":"E5","h":true},{"t":"G♯5","h":false},{"t":"A♯5","h":false},{"t":"C♯6","h":false},{"t":"G♯6","h":false}],"l":[{"t":"E2","h":true},{"t":"E3","h":true},{"t":"A♯3","h":false},{"t":"C♯4","h":false},{"t":"G♯4","h":false},{"t":"A♯4","h":false}]},{"n":35,"r":[{"t":"D♯4","h":false},{"t":"D♯5","h":false}],"l":[{"t":"D♯2","h":false},{"t":"D♯3","h":false}]},{"n":36,"r":[{"t":"D♯4","h":true},{"t":"D♯5","h":true},{"t":"G5","h":false},{"t":"A♯5","h":false},{"t":"C♯6","h":false},{"t":"G6","h":false}],"l":[{"t":"D♯2","h":true},{"t":"D♯3","h":true},{"t":"A♯3","h":false},{"t":"C♯4","h":false},{"t":"G4","h":false},{"t":"A♯4","h":false}]},{"n":37,"r":[{"t":"G♯3","h":false},{"t":"B3","h":false},{"t":"D♯4","h":false},{"t":"G♯4","h":false}],"l":[{"t":"G♯1","h":false},{"t":"B1","h":false},{"t":"D♯2","h":false},{"t":"G♯2","h":false}]},{"n":38,"r":[{"t":"G♯3","h":true},{"t":"G♯5","h":false},{"t":"B5","h":false},{"t":"D♯6","h":false},{"t":"G♯6","h":false}],"l":[{"t":"G♯1","h":true},{"t":"B1","h":true},{"t":"D♯2","h":true},{"t":"G♯2","h":true},{"t":"B3","h":false},{"t":"D♯4","h":false},{"t":"G♯4","h":false},{"t":"B4","h":false}]},{"n":39,"r":[{"t":"G♯3","h":true},{"t":"A5","h":false},{"t":"C♯6","h":false},{"t":"E6","h":false},{"t":"A6","h":false}],"l":[{"t":"G♯1","h":true},{"t":"B1","h":true},{"t":"D♯2","h":true},{"t":"G♯2","h":true},{"t":"C♯4","h":false},{"t":"E4","h":false},{"t":"A4","h":false},{"t":"C♯5","h":false}]},{"n":40,"r":[{"t":"G♯3","h":true},{"t":"F♯5","h":false},{"t":"A5","h":false},{"t":"C♯6","h":false},{"t":"F♯6","h":false}],"l":[{"t":"G♯1","h":true},{"t":"B1","h":true},{"t":"D♯2","h":true},{"t":"G♯2","h":true},{"t":"A3","h":false},{"t":"C♯4","h":false},{"t":"F♯4","h":false},{"t":"A4","h":false}]},{"n":41,"r":[{"t":"G♯3","h":true},{"t":"G♯5","h":false},{"t":"B5","h":false},{"t":"D♯6","h":false},{"t":"G♯6","h":false}],"l":[{"t":"G♯1","h":true},{"t":"B1","h":true},{"t":"D♯2","h":true},{"t":"G♯2","h":true},{"t":"B3","h":false},{"t":"D♯4","h":false},{"t":"G♯4","h":false},{"t":"B4","h":false}]},{"n":42,"r":[{"t":"E5","h":false},{"t":"G♯5","h":false},{"t":"B5","h":false},{"t":"E6","h":false}],"l":[{"t":"G♯1","h":true},{"t":"B1","h":true},{"t":"D♯2","h":true},{"t":"G♯2","h":true},{"t":"G♯3","h":false},{"t":"B3","h":false},{"t":"E4","h":false},{"t":"G♯4","h":false}]},{"n":43,"r":[{"t":"F♯5","h":false},{"t":"A5","h":false},{"t":"C♯6","h":false},{"t":"F♯6","h":false}],"l":[{"t":"G♯1","h":true},{"t":"B1","h":true},{"t":"D♯2","h":true},{"t":"G♯2","h":true},{"t":"A3","h":false},{"t":"C♯4","h":false},{"t":"F♯4","h":false},{"t":"A4","h":false}]},{"n":44,"r":[{"t":"D♯5","h":false},{"t":"F♯5","h":false},{"t":"A5","h":false},{"t":"D♯6","h":false}],"l":[{"t":"G♯1","h":true},{"t":"B1","h":true},{"t":"D♯2","h":true},{"t":"G♯2","h":true},{"t":"F♯3","h":false},{"t":"A3","h":false},{"t":"D♯4","h":false},{"t":"F♯4","h":false}]},{"n":45,"r":[{"t":"E5","h":false},{"t":"G♯5","h":false},{"t":"B5","h":false},{"t":"E6","h":false}],"l":[{"t":"G♯1","h":true},{"t":"B1","h":true},{"t":"D♯2","h":true},{"t":"G♯2","h":true},{"t":"G♯3","h":false},{"t":"B3","h":false},{"t":"E4","h":false},{"t":"G♯4","h":false}]},{"n":46,"r":[{"t":"E5","h":false},{"t":"G♯5","h":false},{"t":"B5","h":false},{"t":"E6","h":false}],"l":[{"t":"G♯3","h":false},{"t":"B3","h":false},{"t":"E4","h":false},{"t":"G♯4","h":false}]},{"n":47,"r":[{"t":"F♯5","h":false},{"t":"A5","h":false},{"t":"C♯6","h":false},{"t":"F♯6","h":false}],"l":[{"t":"A3","h":false},{"t":"C♯4","h":false},{"t":"F♯4","h":false},{"t":"A4","h":false}]},{"n":48,"r":[{"t":"D♯5","h":false},{"t":"F♯5","h":false},{"t":"A5","h":false},{"t":"D♯6","h":false}],"l":[{"t":"F♯3","h":false},{"t":"A3","h":false},{"t":"D♯4","h":false},{"t":"F♯4","h":false}]},{"n":49,"r":[{"t":"E5","h":false},{"t":"G♯5","h":false},{"t":"B5","h":false},{"t":"E6","h":false}],"l":[{"t":"G♯3","h":false},{"t":"B3","h":false},{"t":"E4","h":false},{"t":"G♯4","h":false}]},{"n":50,"r":[{"t":"C♯5","h":false},{"t":"E5","h":false},{"t":"G♯5","h":false},{"t":"C♯6","h":false}],"l":[{"t":"E3","h":false},{"t":"G♯3","h":false},{"t":"C♯4","h":false},{"t":"E4","h":false}]},{"n":51,"r":[{"t":"D♯5","h":false},{"t":"F♯5","h":false},{"t":"A5","h":false},{"t":"D♯6","h":false}],"l":[{"t":"F♯3","h":false},{"t":"A3","h":false},{"t":"D♯4","h":false},{"t":"F♯4","h":false}]},{"n":52,"r":[{"t":"C5","h":false},{"t":"D♯5","h":false},{"t":"F♯5","h":false},{"t":"C6","h":false}],"l":[{"t":"D♯3","h":false},{"t":"F♯3","h":false},{"t":"C4","h":false},{"t":"D♯4","h":false}]},{"n":53,"r":[{"t":"C♯3","h":false},{"t":"C♯4","h":false},{"t":"C♯5","h":false},{"t":"E5","h":false},{"t":"G♯5","h":false},{"t":"C♯6","h":false}],"l":[{"t":"C♯1","h":false},{"t":"C♯2","h":false},{"t":"E3","h":false},{"t":"G♯3","h":false},{"t":"C♯4","h":false},{"t":"E4","h":false}]},{"n":54,"r":[{"t":"C♯3","h":true},{"t":"C♯5","h":false},{"t":"E5","h":false},{"t":"G♯5","h":false},{"t":"C♯6","h":false}],"l":[{"t":"C♯1","h":true},{"t":"C♯2","h":true},{"t":"E3","h":false},{"t":"G♯3","h":false},{"t":"C♯4","h":false},{"t":"E4","h":false}]},{"n":55,"r":[{"t":"C♯3","h":true},{"t":"E5","h":false},{"t":"G♯5","h":false},{"t":"B5","h":false},{"t":"E6","h":false}],"l":[{"t":"C♯1","h":true},{"t":"C♯2","h":true},{"t":"G♯3","h":false},{"t":"B3","h":false},{"t":"E4","h":false},{"t":"G♯4","h":false}]},{"n":56,"r":[{"t":"C♯3","h":true},{"t":"D♯5","h":false},{"t":"G5","h":false},{"t":"A♯5","h":false},{"t":"D♯6","h":false}],"l":[{"t":"C♯1","h":true},{"t":"C♯2","h":true},{"t":"G3","h":false},{"t":"A♯3","h":false},{"t":"D♯4","h":false},{"t":"G4","h":false}]},{"n":57,"r":[{"t":"A3","h":false},{"t":"A4","h":false}],"l":[{"t":"A1","h":false},{"t":"A2","h":false}]},{"n":58,"r":[{"t":"A3","h":true},{"t":"A4","h":true},{"t":"D5","h":false},{"t":"F♯5","h":false},{"t":"C6","h":false},{"t":"D6","h":false}],"l":[{"t":"A1","h":true},{"t":"A2","h":true},{"t":"F♯3","h":false},{"t":"C4","h":false},{"t":"D4","h":false},{"t":"F♯4","h":false}]},{"n":59,"r":[{"t":"G♯3","h":false},{"t":"G♯4","h":false}],"l":[{"t":"G♯1","h":false},{"t":"G♯2","h":false}]},{"n":60,"r":[{"t":"G♯3","h":true},{"t":"G♯4","h":true},{"t":"C5","h":false},{"t":"D♯5","h":false},{"t":"F♯5","h":false},{"t":"C6","h":false}],"l":[{"t":"G♯1","h":true},{"t":"G♯2","h":true},{"t":"D♯3","h":false},{"t":"F♯3","h":false},{"t":"C4","h":false},{"t":"D♯4","h":false}]},{"n":61,"r":[{"t":"C♯3","h":false},{"t":"E3","h":false},{"t":"G♯3","h":false},{"t":"C♯4","h":false}],"l":[{"t":"C♯1","h":false},{"t":"E1","h":false},{"t":"G♯1","h":false},{"t":"C♯2","h":false}]},{"n":62,"r":[{"t":"C♯3","h":true},{"t":"C♯5","h":false},{"t":"E5","h":false},{"t":"G♯5","h":false},{"t":"C♯6","h":false}],"l":[{"t":"C♯1","h":true},{"t":"E1","h":true},{"t":"G♯1","h":true},{"t":"C♯2","h":true},{"t":"E3","h":false},{"t":"G♯3","h":false},{"t":"C♯4","h":false},{"t":"E4","h":false}]},{"n":63,"r":[{"t":"C♯3","h":true},{"t":"G♯5","h":false},{"t":"C♯6","h":false},{"t":"G♯6","h":false}],"l":[{"t":"C♯1","h":true},{"t":"E1","h":true},{"t":"G♯1","h":true},{"t":"C♯2","h":true},{"t":"B3","h":false},{"t":"C♯4","h":false},{"t":"G♯4","h":false},{"t":"B4","h":false}]},{"n":64,"r":[{"t":"C♯3","h":true},{"t":"F♯5","h":false},{"t":"C♯6","h":false},{"t":"F♯6","h":false}],"l":[{"t":"C♯1","h":true},{"t":"E1","h":true},{"t":"G♯1","h":true},{"t":"C♯2","h":true},{"t":"A3","h":false},{"t":"C♯4","h":false},{"t":"F♯4","h":false},{"t":"A4","h":false}]},{"n":65,"r":[{"t":"A3","h":false},{"t":"A4","h":false}],"l":[{"t":"A1","h":false},{"t":"A2","h":false}]},{"n":66,"r":[{"t":"A3","h":true},{"t":"A4","h":true},{"t":"E5","h":false},{"t":"F♯5","h":false},{"t":"C6","h":false},{"t":"E6","h":false}],"l":[{"t":"A1","h":true},{"t":"A2","h":true},{"t":"F♯3","h":false},{"t":"C4","h":false},{"t":"E4","h":false},{"t":"F♯4","h":false}]},{"n":67,"r":[{"t":"G♯3","h":false},{"t":"G♯4","h":false}],"l":[{"t":"G♯1","h":false},{"t":"G♯2","h":false}]},{"n":68,"r":[{"t":"G♯3","h":true},{"t":"G♯4","h":true},{"t":"C5","h":false},{"t":"D♯5","h":false},{"t":"F♯5","h":false},{"t":"C6","h":false}],"l":[{"t":"G♯1","h":true},{"t":"G♯2","h":true},{"t":"D♯3","h":false},{"t":"F♯3","h":false},{"t":"C4","h":false},{"t":"D♯4","h":false}]},{"n":69,"r":[{"t":"C♯3","h":false},{"t":"C♯4","h":false},{"t":"C♯5","h":false},{"t":"E5","h":false},{"t":"G♯5","h":false},{"t":"C♯6","h":false}],"l":[{"t":"C♯1","h":false},{"t":"C♯2","h":false},{"t":"E3","h":false},{"t":"G♯3","h":false},{"t":"C♯4","h":false},{"t":"E4","h":false}]},{"n":70,"r":[{"t":"C♯3","h":true},{"t":"C♯4","h":false},{"t":"G♯4","h":false},{"t":"C♯5","h":false}],"l":[{"t":"C♯1","h":true},{"t":"C♯2","h":true},{"t":"E3","h":false},{"t":"G♯3","h":false},{"t":"E4","h":false}]},{"n":71,"r":[{"t":"C♯3","h":true},{"t":"D4","h":false},{"t":"A4","h":false},{"t":"D5","h":false}],"l":[{"t":"C♯1","h":true},{"t":"C♯2","h":true},{"t":"F♯3","h":false},{"t":"A3","h":false},{"t":"F♯4","h":false}]},{"n":72,"r":[{"t":"C♯3","h":true},{"t":"B3","h":false},{"t":"F♯4","h":false},{"t":"B4","h":false}],"l":[{"t":"C♯1","h":true},{"t":"C♯2","h":true},{"t":"D3","h":false},{"t":"F♯3","h":false},{"t":"D4","h":false}]},{"n":73,"r":[{"t":"C♯3","h":true},{"t":"C♯4","h":false},{"t":"G♯4","h":false},{"t":"C♯5","h":false}],"l":[{"t":"C♯1","h":true},{"t":"C♯2","h":true},{"t":"E3","h":false},{"t":"G♯3","h":false},{"t":"E4","h":false}]},{"n":74,"r":[{"t":"A3","h":false},{"t":"E4","h":false},{"t":"A4","h":false}],"l":[{"t":"C♯3","h":false},{"t":"E3","h":false},{"t":"C♯4","h":false}]},{"n":75,"r":[{"t":"B3","h":false},{"t":"F♯4","h":false},{"t":"B4","h":false}],"l":[{"t":"D3","h":false},{"t":"F♯3","h":false},{"t":"D4","h":false}]},{"n":76,"r":[{"t":"G♯3","h":false},{"t":"D4","h":false},{"t":"G♯4","h":false}],"l":[{"t":"B2","h":false},{"t":"F♯3","h":false},{"t":"B3","h":false}]},{"n":77,"r":[{"t":"A3","h":false},{"t":"F♯4","h":false},{"t":"A4","h":false}],"l":[{"t":"C♯3","h":false},{"t":"F♯3","h":false},{"t":"C♯4","h":false}]},{"n":78,"r":[{"t":"A3","h":false},{"t":"F♯4","h":false},{"t":"A4","h":false}],"l":[{"t":"C♯3","h":false},{"t":"F♯3","h":false},{"t":"C♯4","h":false}]},{"n":79,"r":[{"t":"C♯4","h":false},{"t":"F♯4","h":false},{"t":"C♯5","h":false}],"l":[{"t":"E3","h":false},{"t":"F♯3","h":false},{"t":"E4","h":false}]},{"n":80,"r":[{"t":"B3","h":false},{"t":"F♯4","h":false},{"t":"B4","h":false}],"l":[{"t":"D3","h":false},{"t":"F♯3","h":false},{"t":"D4","h":false}]},{"n":81,"r":[{"t":"G3","h":false}],"l":[{"t":"G1","h":false},{"t":"G2","h":false}]},{"n":82,"r":[{"t":"G3","h":true},{"t":"A3","h":false},{"t":"E4","h":false},{"t":"A4","h":false}],"l":[{"t":"G1","h":true},{"t":"G2","h":true},{"t":"E3","h":false},{"t":"C♯4","h":false}]},{"n":83,"r":[{"t":"G♯3","h":false}],"l":[{"t":"G♯1","h":false},{"t":"G♯2","h":false}]},{"n":84,"r":[{"t":"G♯3","h":false},{"t":"F♯4","h":false},{"t":"G♯4","h":false}],"l":[{"t":"G♯1","h":true},{"t":"G♯2","h":true},{"t":"D♯3","h":false},{"t":"F♯3","h":false},{"t":"C4","h":false}]},{"n":85,"r":[{"t":"C♯3","h":false}],"l":[{"t":"C♯1","h":false},{"t":"C♯2","h":false}]},{"n":86,"r":[{"t":"C♯3","h":true},{"t":"C♯4","h":false},{"t":"A4","h":false},{"t":"C♯5","h":false}],"l":[{"t":"C♯1","h":true},{"t":"C♯2","h":true},{"t":"E3","h":false},{"t":"A3","h":false},{"t":"E4","h":false}]},{"n":87,"r":[{"t":"C♯3","h":false}],"l":[{"t":"C♯1","h":false},{"t":"C♯2","h":false}]},{"n":88,"r":[{"t":"C♯3","h":true},{"t":"C♯4","h":false},{"t":"G♯4","h":false},{"t":"C♯5","h":false}],"l":[{"t":"C♯1","h":true},{"t":"C♯2","h":true},{"t":"E3","h":false},{"t":"A♯3","h":false},{"t":"E4","h":false}]},{"n":89,"r":[{"t":"C♯3","h":false}],"l":[{"t":"C♯1","h":false},{"t":"C♯2","h":false}]},{"n":90,"r":[{"t":"C♯3","h":true},{"t":"C♯4","h":false},{"t":"A4","h":false},{"t":"C♯5","h":false}],"l":[{"t":"C♯1","h":true},{"t":"C♯2","h":true},{"t":"E3","h":false},{"t":"G3","h":false},{"t":"E4","h":false}]},{"n":91,"r":[{"t":"C♯3","h":false}],"l":[{"t":"C♯1","h":false},{"t":"C♯2","h":false}]},{"n":92,"r":[{"t":"C♯3","h":true},{"t":"C♯4","h":false},{"t":"F♯4","h":false},{"t":"A♯4","h":false},{"t":"C♯5","h":false}],"l":[{"t":"C♯1","h":true},{"t":"C♯2","h":true},{"t":"E3","h":false},{"t":"F♯3","h":false},{"t":"A♯3","h":false},{"t":"E4","h":false}]},{"n":93,"r":[{"t":"C♯3","h":false}],"l":[{"t":"C♯1","h":false},{"t":"C♯2","h":false}]},{"n":94,"r":[{"t":"C♯3","h":true},{"t":"C♯4","h":false},{"t":"F♯4","h":false},{"t":"A4","h":false},{"t":"C♯5","h":false}],"l":[{"t":"C♯1","h":true},{"t":"C♯2","h":true},{"t":"D♯3","h":false},{"t":"F♯3","h":false},{"t":"A3","h":false},{"t":"D♯4","h":false}]},{"n":95,"r":[{"t":"C♯3","h":false}],"l":[{"t":"C♯1","h":false},{"t":"C♯2","h":false}]},{"n":96,"r":[{"t":"C♯4","h":false},{"t":"E4","h":false},{"t":"G♯4","h":false},{"t":"C♯5","h":false}],"l":[{"t":"C♯1","h":true},{"t":"C♯2","h":true},{"t":"G♯2","h":false},{"t":"C♯3","h":false},{"t":"E3","h":false},{"t":"G♯3","h":false}]},{"n":97,"r":[{"t":"G♯4","h":false},{"t":"C♯5","h":false},{"t":"E5","h":false},{"t":"G♯5","h":false}],"l":[{"t":"C♯1","h":true},{"t":"C♯2","h":true},{"t":"E3","h":false},{"t":"G♯3","h":false},{"t":"C♯4","h":false},{"t":"E4","h":false}]},{"n":98,"r":[{"t":"G♯4","h":false},{"t":"C♯5","h":false},{"t":"E5","h":false},{"t":"G♯5","h":false}],"l":[{"t":"C♯1","h":true},{"t":"C♯2","h":true},{"t":"E3","h":false},{"t":"G♯3","h":false},{"t":"C♯4","h":false},{"t":"E4","h":false}]}];
 const MODES = [["synthesia","Synthesia"],["strike","Strike"],["book","Book"],["strip","Strip"],["stand","Stand"]];
+const Q = [{"n":1,"w":"They","m":"Bar 5. F. Sung pitch. Left is the chord root, not the printed bass.","r":[{"t":"F3","h":false}],"l":[{"t":"F2","h":false}]},{"n":2,"w":"put","r":[{"t":"G3","h":false}],"l":[{"t":"F2","h":false}]},{"n":3,"w":"me","r":[{"t":"A3","h":false}],"l":[{"t":"F2","h":false}]},{"n":4,"w":"in","r":[{"t":"F3","h":false}],"l":[{"t":"F2","h":false}]},{"n":5,"w":"a","m":"Bar 6. B-flat.","r":[{"t":"F3","h":false}],"l":[{"t":"B♭2","h":false}]},{"n":6,"w":"cage","r":[{"t":"G3","h":false}],"l":[{"t":"B♭2","h":false}]},{"n":7,"w":"to","r":[{"t":"A3","h":false}],"l":[{"t":"B♭2","h":false}]},{"n":8,"w":"see","r":[{"t":"B♭3","h":false}],"l":[{"t":"B♭2","h":false}]},{"n":9,"w":"what","m":"Bar 7. F.","r":[{"t":"A3","h":false}],"l":[{"t":"F2","h":false}]},{"n":10,"w":"hap-","r":[{"t":"B♭3","h":false}],"l":[{"t":"F2","h":false}]},{"n":11,"w":"pens","r":[{"t":"C4","h":false}],"l":[{"t":"F2","h":false}]},{"n":12,"w":"when","r":[{"t":"A3","h":false}],"l":[{"t":"F2","h":false}]},{"n":13,"w":"you","m":"Bar 8. B-flat. The next lyric is on the next system and is not here.","r":[{"t":"B♭3","h":false}],"l":[{"t":"B♭2","h":false}]},{"n":14,"w":"put","r":[{"t":"A3","h":false}],"l":[{"t":"B♭2","h":false}]}];
+let song = "prelude";
 let i = 7, mode = "synthesia", timer = 0;
-function place(n){ if(n<=20) return "Opening"; if(n<=52) return "Fast middle"; if(n<85) return "After the middle"; return "Ending"; }
-function land(n){
+function list(){ return song==="prelude" ? H : Q; }
+function cueWord(){ return song==="prelude" ? "low ↑" : "high ↑"; }
+function place(n){ if(song!=="prelude") return "Verse"; if(n<=20) return "Opening"; if(n<=52) return "Fast middle"; if(n<85) return "After the middle"; return "Ending"; }
+function land(ev){
+  if(ev.m) return ev.m;
+  const n = ev.n;
+  if(song!=="prelude") return "";
   if(n===8) return "A-sharp stop. Next strikes are still the opening.";
   if(n===9) return "Check. Right hand A then A. Left hand A then A.";
   if(n===53) return "Practice jump after the fast middle. Not measure 53.";
@@ -84,61 +93,70 @@ function land(n){
 }
 function col(name, notes, size){
   const body = notes.length ? notes.map(n => n.h ? '<p class="hold">'+n.t+'</p>' : '<p class="at">'+n.t+'</p>').join("") : '<p class="at">—</p>';
-  return '<div class="'+size+'"><p class="lab">'+name+'</p><p class="cue">low ↑</p>'+body+'</div>';
+  return '<div class="'+size+'"><p class="lab">'+name+'</p><p class="cue">'+cueWord()+'</p>'+body+'</div>';
 }
-function hands(h, size){ return '<div class="hands">'+col("RIGHT", h.r, size)+col("LEFT", h.l, size)+'</div>'; }
+function hands(h, size){ return '<div class="hands">'+col("RIGHT", h.r, size)+col("LEFT", h.l, size)+'</div>'+(h.w?'<p class="word">'+h.w+'</p>':''); }
+function pageStart(idx){
+  if(song==="prelude") return idx<7 ? 0 : 7+Math.floor((idx-7)/8)*8;
+  return Math.floor(idx/8)*8;
+}
 function draw(hear){
-  const h = H[i];
-  document.getElementById("title").textContent = mode==="book" ? "After the A♯" : mode==="stand" ? "Prelude in C-sharp minor" : "After the cascade";
-  document.getElementById("meta").textContent = "Strike "+h.n+" of 98 · "+place(h.n)+" · "+mode;
-  const L = land(h.n);
-  let html = "", note = "Low key on top. Left stack is your right hand. Gray, dotted, is still holding. It is not a new strike.";
+  const evs = list();
+  const h = evs[i];
+  const modeName = MODES.find(m=>m[0]===mode)[1];
+  document.getElementById("title").textContent = song!=="prelude" ? "Quicksand" : mode==="book" ? "After the A♯" : mode==="stand" ? "Prelude in C-sharp minor" : "After the cascade";
+  document.getElementById("meta").textContent = "Strike "+h.n+" of "+evs.length+" · "+place(h.n)+" · "+modeName;
+  const L = land(h);
+  const singer = song!=="prelude";
+  let html = "", note = singer ? "High note on top. Right hand is the pitch you sing. Left hand is only the chord root. The printed piano is not copied." : "Low key on top. Left stack is your right hand. Gray, dotted, is still holding. It is not a new strike.";
   if(mode==="synthesia"){
-    html = '<div class="fit"><div class="card gold"><p class="nowbar" id="pulse">Now'+(L?" · "+L:"")+'</p>'+hands(h,"fill")+'</div><div class="line"></div><div class="peek">';
+    html = '<div class="fit"><div class="card gold"><p class="nowbar" id="pulse">Now'+(h.w?" · "+h.w:"")+(L?" · "+L:"")+'</p>'+hands(h,"fill")+'</div><div class="line"></div><div class="peek">';
     for(let k=1;k<=3;k++){
-      if(H[i+k]) html += '<div class="card"><p class="nowbar">Next '+H[i+k].n+'</p>'+hands(H[i+k],"page")+'</div>';
-      else html += '<div class="card"><p class="nowbar">End</p><div class="hands page"><div><p class="lab">RIGHT</p><p class="cue">low ↑</p><p class="at">—</p></div><div><p class="lab">LEFT</p><p class="cue">low ↑</p><p class="at">—</p></div></div></div>';
+      if(evs[i+k]) html += '<div class="card"><p class="nowbar">Next '+evs[i+k].n+(evs[i+k].w?" · "+evs[i+k].w:"")+'</p>'+hands(evs[i+k],"page")+'</div>';
+      else html += '<div class="card"><p class="nowbar">End</p><div class="hands page"><div><p class="lab">RIGHT</p><p class="cue">'+cueWord()+'</p><p class="at">—</p></div><div><p class="lab">LEFT</p><p class="cue">'+cueWord()+'</p><p class="at">—</p></div></div></div>';
     }
     html += '</div></div>';
     note = "Synthesia. This strike fills the screen. The next three peek under the gold line.";
   } else if(mode==="strike"){
-    html = '<div class="card gold"><p class="nowbar">Strike '+h.n+(L?" · "+L:"")+'</p>'+hands(h,"fill")+'</div>';
-    const nxt = H[i+1];
-    note = nxt ? "Next "+nxt.n+". Still down stays small. The letters here are the new strike." : "End. The last chord holds. It does not strike again.";
+    html = '<div class="fit"><div class="card gold"><p class="nowbar">Strike '+h.n+(h.w?" · "+h.w:"")+(L?" · "+L:"")+'</p>'+hands(h,"fill")+'</div></div>';
+    const nxt = evs[i+1];
+    note = nxt ? "Next "+nxt.n+(nxt.w?" · "+nxt.w:"")+". Still down stays small. The letters here are the new strike." : "End. The last chord holds. It does not strike again.";
   } else if(mode==="book"){
-    const start = i<7 ? 0 : 7+Math.floor((i-7)/8)*8;
-    const slice = H.slice(start, start+ (i<7?7:8));
-    html = '<div class="bookpage"><p class="note">Low key on top. Left stack is the right hand. '+slice[0].n+"–"+slice[slice.length-1].n+' of 98.</p>';
+    const start = pageStart(i);
+    const take = (song==="prelude" && start===0) ? 7 : 8;
+    const slice = evs.slice(start, start+take);
+    html = '<div class="bookpage"><p class="note">'+(singer?"High note on top. Right hand sings. ":"Low key on top. Left stack is the right hand. ")+slice[0].n+"–"+slice[slice.length-1].n+" of "+evs.length+".</p>";
     slice.forEach(ev => {
-      const lm = land(ev.n);
+      const lm = land(ev);
       html += '<button type="button" class="row'+(ev.n===h.n?" here":"")+'" data-go="'+(ev.n-1)+'"><span class="num">'+ev.n+'</span><span>'+hands(ev,"phrase")+(lm?'<span class="land">'+lm+'</span>':"")+'</span></button>';
     });
-    const want = 8;
-    for (let pad = slice.length; pad < want; pad++) html += '<div class="row"><span class="num">·</span><span class="land">Blank. This page keeps eight places.</span></div>';
+    for (let pad = slice.length; pad < 8; pad++) html += '<div class="row"><span class="num">·</span><span class="land">Blank. This page keeps eight places.</span></div>';
     html += '</div>';
     note = "Book. Eight strikes. Next turns the page.";
   } else if(mode==="strip"){
     html = '<div class="strip">';
-    for(let k=i;k<Math.min(98,i+4);k++) html += '<button type="button" class="card'+(k===i?" gold":"")+'" data-go="'+k+'"><p class="nowbar">'+(k===i?"Now":"+"+(k-i))+' '+H[k].n+'</p>'+hands(H[k],"phrase")+'</button>';
+    for(let k=i;k<Math.min(evs.length,i+4);k++) html += '<button type="button" class="card'+(k===i?" gold":"")+'" data-go="'+k+'"><p class="nowbar">'+(k===i?"Now":"+"+(k-i))+" "+evs[k].n+(evs[k].w?" · "+evs[k].w:"")+'</p>'+hands(evs[k],"phrase")+'</button>';
     html += '<div style="min-width:80%"></div></div>';
     note = "Steady strip. Your place stays on the left. Look right for the next changes.";
   } else {
     let prev = "";
     html = '<div class="stand">';
-    H.forEach((ev, idx) => {
+    evs.forEach((ev, idx) => {
       const sec = place(ev.n);
       if(sec!==prev){ if(prev) html += '</div>'; html += '<div class="block"><p class="sec">'+sec+'</p>'; prev = sec; }
-      const lm = land(ev.n);
+      const lm = land(ev);
       html += '<button type="button" class="row'+(idx===i?" here":"")+'" data-go="'+idx+'" id="s'+ev.n+'"><span class="num">'+ev.n+'</span><span>'+hands(ev,"page")+(lm?'<span class="land">'+lm+'</span>':"")+'</span></button>';
     });
     html += '</div></div>';
-    note = "Stand. The whole prelude. Tap a strike. Sections are marked.";
+    note = singer ? "Stand. These sung strikes only. Bars 9 on are not engraved." : "Stand. The whole prelude. Tap a strike. Sections are marked.";
   }
   const stage = document.getElementById("stage");
   stage.innerHTML = html;
   document.getElementById("note").textContent = note;
+  document.getElementById("jumps").style.display = song==="prelude" ? "" : "none";
   stage.querySelectorAll("[data-go]").forEach(el => el.onclick = () => { stop(); i = Number(el.dataset.go); draw(true); });
   [...document.getElementById("modes").children].forEach(b => b.classList.toggle("on", b.dataset.mode===mode));
+  [...document.getElementById("songs").children].forEach(b => b.classList.toggle("on", b.dataset.song===song));
   if(mode==="stand"){
     const here = document.getElementById("s"+h.n);
     if(here){
@@ -146,14 +164,31 @@ function draw(hear){
       stage.scrollTop = Math.max(0, y);
     }
   }
+  fitCard();
   if(hear) sound(h);
   history.replaceState(null,"","#"+mode);
 }
+function fitCard(){
+  document.querySelectorAll("#stage .card.gold").forEach(card => {
+    const notes = card.querySelectorAll(".at, .hold");
+    if(!notes.length) return;
+    let px = 28;
+    const apply = () => {
+      notes.forEach(el => { el.style.fontSize = px+"px"; el.style.lineHeight = ".9"; el.style.margin = "0"; });
+      card.querySelectorAll(".cue, .lab, .word").forEach(el => { el.style.fontSize = Math.max(8, px*0.38)+"px"; el.style.margin = "0"; });
+    };
+    apply();
+    for(let n=0; n<20 && card.scrollHeight > card.clientHeight+1; n++){
+      px = Math.max(8, px*0.86);
+      apply();
+    }
+  });
+}
 let ac;
 function freq(name){
-  const m = /^([A-G])([♯b]?)(\d)$/.exec(name);
+  const m = /^([A-G])([♯b♭]?)(\d)$/.exec(name);
   if(!m) return 0;
-  const pc = {C:0,"D":2,E:4,F:5,G:7,A:9,B:11}[m[1]] + (m[2]==="♯"?1:m[2]==="b"?-1:0);
+  const pc = {C:0,"D":2,E:4,F:5,G:7,A:9,B:11}[m[1]] + (m[2]==="♯"?1:(m[2]==="b"||m[2]==="♭")?-1:0);
   const midi = (Number(m[3])+1)*12 + pc;
   return 440 * Math.pow(2, (midi-69)/12);
 }
@@ -180,26 +215,36 @@ function sound(h){
 function stop(){ clearInterval(timer); timer=0; document.getElementById("play").textContent="Play"; }
 function step(d){
   stop();
+  const last = list().length-1;
   if(mode==="book"){
-    const start = i<7 ? 0 : 7+Math.floor((i-7)/8)*8;
-    if(d>0) i = start===0 ? 7 : Math.min(97, start+8);
-    else i = start<=7 ? 0 : start-8;
-    if(d>0 && start>=95) i = start;
-  } else i = Math.max(0, Math.min(97, i+d));
+    const start = pageStart(i);
+    if(d>0){
+      let next = (song==="prelude" && start===0) ? 7 : start+8;
+      i = next>last ? start : next;
+    } else if(song==="prelude") {
+      i = start<=7 ? 0 : start-8;
+    } else i = Math.max(0, start-8);
+  } else i = Math.max(0, Math.min(last, i+d));
   draw(true);
 }
 function play(){
   if(timer) return stop();
   document.getElementById("play").textContent="Stop";
-  sound(H[i]);
-  timer = setInterval(()=>{ if(i>=97) return stop(); i++; draw(true); }, 650);
+  sound(list()[i]);
+  timer = setInterval(()=>{ if(i>=list().length-1) return stop(); i++; draw(true); }, 650);
 }
 const modes = document.getElementById("modes");
 MODES.forEach(([id,label])=>{
   const b=document.createElement("button");
   b.type="button"; b.textContent=label; b.dataset.mode=id;
-  b.onclick=()=>{ stop(); mode=id; if(i<7 && id!=="stand" && id!=="book") i=7; draw(); };
+  b.onclick=()=>{ stop(); mode=id; if(song==="prelude" && i<7 && id!=="stand" && id!=="book") i=7; draw(); };
   modes.appendChild(b);
+});
+[["prelude","Prelude"],["sand","Quicksand"]].forEach(([id,label])=>{
+  const b=document.createElement("button");
+  b.type="button"; b.textContent=label; b.dataset.song=id;
+  b.onclick=()=>{ stop(); song=id; i = id==="prelude" ? 7 : 0; mode="synthesia"; draw(); };
+  document.getElementById("songs").appendChild(b);
 });
 document.getElementById("back").onclick=()=>step(-1);
 document.getElementById("next").onclick=()=>step(1);
@@ -208,7 +253,7 @@ document.getElementById("play").onclick=play;
   const b=document.createElement("button");
   b.type="button";
   b.textContent = n===8 ? "A♯ 8" : n===9 ? "9 check" : n===53 ? "53 jump" : "98 end";
-  b.onclick=()=>{ stop(); i=n-1; draw(true); };
+  b.onclick=()=>{ if(song!=="prelude") return; stop(); i=n-1; draw(true); };
   document.getElementById("jumps").appendChild(b);
 });
 const hash=location.hash.replace("#","");
