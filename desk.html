@@ -23,7 +23,7 @@
   .hands > div + div { border-left: 1px solid #d9d0c2; }
   .lab { text-align: center; letter-spacing: .14em; color: #6d645c; font-size: 11px; margin: 4px 0 0; }
   .at { margin: 0; text-align: center; font-family: Fraunces, Georgia, serif; font-weight: 680; line-height: .9; }
-  .hold { margin: 0; text-align: center; color: #6a625a; font-weight: 700; text-decoration: underline dotted; text-underline-offset: .2em; }
+  .hold { margin: 1px auto; text-align: center; color: #6a625a; font-weight: 700; border: 1px dotted #8a8178; border-radius: 8px; width: fit-content; padding: 0 6px; }
   .fill .at { font-size: clamp(2rem, 7.2dvh, 4.2rem); }
   .fill .hold { font-size: clamp(.95rem, 2.6dvh, 1.35rem); }
   .phrase .at { font-size: 1.35rem; }
@@ -37,7 +37,7 @@
   .row.here { outline: 3px solid #c4a15a; }
   .num { font-weight: 800; color: #6d645c; padding-top: 8px; text-align: center; }
   .land { display: block; text-align: left; font-size: .72rem; font-weight: 800; color: #6d645c; padding: 2px 6px 4px; }
-  .sec { margin: 10px 0 4px; font-weight: 800; color: #c4a15a; }
+  .sec { margin: 10px 0 4px; font-weight: 800; color: #c4a15a; position: sticky; top: 0; background: #14110e; z-index: 2; }
   .strip { display: flex; gap: 8px; overflow-x: auto; }
   .strip .card { min-width: 78%; }
   .bar { display: grid; grid-template-columns: 1fr 1.35fr 1fr; gap: 8px; padding: 8px 0 calc(8px + env(safe-area-inset-bottom)); background: #14110e; position: sticky; bottom: 0; }
@@ -81,8 +81,11 @@ function draw(){
   const L = land(h.n);
   let html = "", note = "Low key on top. Left stack is your right hand. Gray, dotted, is still holding. It is not a new strike.";
   if(mode==="synthesia"){
-    html = '<div class="card gold"><p class="nowbar">Now'+(L?" · "+L:"")+'</p>'+hands(h,"fill")+'</div><div class="line"></div><div class="peek">';
-    for(let k=1;k<=3;k++) if(H[i+k]) html += '<div class="card"><p class="nowbar">Next '+H[i+k].n+'</p>'+hands(H[i+k],"page")+'</div>';
+    html = '<div class="card gold"><p class="nowbar" id="pulse">Now'+(L?" · "+L:"")+'</p>'+hands(h,"fill")+'</div><div class="line"></div><div class="peek">';
+    for(let k=1;k<=3;k++){
+      if(H[i+k]) html += '<div class="card"><p class="nowbar">Next '+H[i+k].n+'</p>'+hands(H[i+k],"page")+'</div>';
+      else html += '<div class="card"><p class="nowbar">End</p><div class="hands page"><div><p class="lab">RIGHT</p><p class="at">—</p></div><div><p class="lab">LEFT</p><p class="at">—</p></div></div></div>';
+    }
     html += '</div>';
     note = "Synthesia. This strike fills the screen. The next three peek under the gold line.";
   } else if(mode==="strike"){
@@ -97,11 +100,13 @@ function draw(){
       const lm = land(ev.n);
       html += '<button type="button" class="row'+(ev.n===h.n?" here":"")+'" data-go="'+(ev.n-1)+'"><span class="num">'+ev.n+'</span><span>'+hands(ev,"phrase")+(lm?'<span class="land">'+lm+'</span>':"")+'</span></button>';
     });
+    const want = i<7 ? 7 : 8;
+    for (let pad = slice.length; pad < want; pad++) html += '<div class="row"><span class="num">·</span><span class="land">Blank. This page keeps eight places.</span></div>';
     note = "Book. Eight strikes. Next turns the page.";
   } else if(mode==="strip"){
     html = '<div class="strip">';
     for(let k=i;k<Math.min(98,i+4);k++) html += '<button type="button" class="card'+(k===i?" gold":"")+'" data-go="'+k+'"><p class="nowbar">'+(k===i?"Now":"+"+(k-i))+' '+H[k].n+'</p>'+hands(H[k],"phrase")+'</button>';
-    html += '</div>';
+    html += '<div style="min-width:80%"></div></div>';
     note = "Steady strip. Your place stays on the left. Look right for the next changes.";
   } else {
     let prev = "";
